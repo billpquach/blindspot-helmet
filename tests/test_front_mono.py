@@ -227,8 +227,11 @@ class CommandLineTests(unittest.TestCase):
     def test_collision_needs_no_calibration(self):
         self.assertIsNone(self.parse("--collision").collision_calibration)
         self.assertTrue(self.parse("--sim", "--collision").sim)
+        self.assertTrue(self.parse("--sim").collision, "--sim scripts the front camera too")
+        self.assertFalse(self.parse("--sim", "--rear-only").collision)
         for bad in (["--sim", "--collision", "--collision-calibration", "c.json"], ["--collision-calibration", "c.json"],
-                    ["--sim", "--collision", "--video", "a.mp4"], ["--collision", "--video", "rear.avi"]):
+                    ["--sim", "--collision", "--video", "a.mp4"], ["--collision", "--video", "rear.avi"],
+                    ["--rear-only"], ["--sim", "--collision", "--rear-only"]):
             with self.assertRaises(SystemExit, msg=bad):
                 self.parse(*bad)
 

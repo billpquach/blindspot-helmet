@@ -23,7 +23,7 @@ looks for people.
 
 | Goal | Command |
 |---|---|
-| No hardware at all (demo backup) | `python -m helmet.main --sim --collision` (add `--demo-person` for teammates behind) |
+| No hardware at all (demo backup) | `python -m helmet.main --sim` (add `--demo-person` for teammates behind) |
 | Record both cameras for a replay test | `python -m tools.record_pair --output take_01 --seconds 20` |
 | Replay a recording | `python -m helmet.main --collision --video take_01/rear.avi --front-video take_01/front.avi --replay-timestamps take_01/timestamps.json --headless --stream 8080 --no-gemini` |
 | Save every front decision | add `--collision-log front.jsonl` |
@@ -82,7 +82,7 @@ code in `helmet/perception.py`.
 6. Rear alerts keep working the whole time. A teammate approaching from behind (with
    `--demo-person`) shows up behind the bike in the same 3D view.
 
-If the room or the camera misbehaves, run `--sim --collision`. It scripts all of the above
+If the room or the camera misbehaves, run `--sim`. It scripts all of the above
 through the real engine and the real 3D view.
 
 ## Test cases
@@ -98,9 +98,9 @@ through the real engine and the real 3D view.
 | Losing the camera holds BRAKE briefly and never drops it silently; time going backwards (a replay loop) starts fresh | `test_camera_loss_holds_brake_briefly_then_unavailable` |
 | Same output fields as marker mode, valid JSON, decision log written | `test_result_matches_marker_fields_and_is_json`, `test_log_and_preview` |
 | Every tracked object ahead reaches the 3D view, a stale feed clears them, and the OLED shows BRAKE | `OutputTests` |
-| BRAKE beeps once when it starts, a flickering BRAKE doesn't beep again within 4 s, a recent rear beep doesn't hold it back, and the `--sim --collision` run plays it | `tests/test_beeps.py`, `test_main_sim_collision_serves_front_and_rear` |
+| BRAKE beeps once when it starts, a flickering BRAKE doesn't beep again within 4 s, a recent rear beep doesn't hold it back, and the `--sim` run plays it | `tests/test_beeps.py`, `test_main_sim_collision_serves_front_and_rear` |
 | Live dual-camera threads, paired-video replay and the simulator scenes reach BRAKE when they should and not otherwise | `RuntimeTests` |
-| `--collision` needs no calibration, and `--sim --collision` serves front and rear together end to end | `CommandLineTests` |
+| `--collision` needs no calibration, `--sim` turns the front on (`--rear-only` turns it off), and `--sim` serves front and rear together end to end | `CommandLineTests` |
 
 ### Simulated evidence (`python -m tools.eval_front`, 20 runs per row)
 

@@ -10,9 +10,9 @@ spoken alerts. Gemini writes descriptions and incident reports on the side. It n
 `--collision` adds the front camera. It uses the same box-growth time to contact as the rear,
 so it needs no calibration. When something ahead is 2.8 s away, the display shows BRAKE and
 you hear three quick beeps. The 3D view draws front and rear traffic together. The guide,
-test cases and roadmap are in [FRONT_CAMERA_ONLY.md](docs/FRONT_CAMERA_ONLY.md), and
-`--sim --collision` runs it with no hardware. [COLLISION_DEMO.md](docs/COLLISION_DEMO.md) covers an older marker mode that measures
-exact metres but needs calibration. The rear-only commands below work without either.
+test cases and roadmap are in [FRONT_CAMERA_ONLY.md](docs/FRONT_CAMERA_ONLY.md), and `--sim`
+runs both cameras with no hardware. [COLLISION_DEMO.md](docs/COLLISION_DEMO.md) covers an older
+marker mode that measures exact metres but needs calibration. The rear-only commands below work without either.
 
 ```
 FAST PATH (every frame, ~70-120 ms, no network)
@@ -98,9 +98,9 @@ python -m helmet.main --no-gemini              # prove it works fully offline
 python -m helmet.main --agent                  # Gemini tool calling
 python -m helmet.main --log run.csv            # per-frame metrics for calibration
 python -m helmet.main --model yolo26n.pt       # swap detector
-python -m helmet.main --sim                    # scripted traffic, no camera/YOLO; open http://<ip>:8080/view
+python -m helmet.main --sim                    # both cameras scripted, no camera/YOLO; open http://<ip>:8080/view
+python -m helmet.main --sim --rear-only        # scripted rear traffic only
 python -m helmet.main --collision              # add the front camera: BRAKE warning, no calibration
-python -m helmet.main --sim --collision        # both cameras scripted: front + rear in one 3D view
 ```
 
 | Key | Action | Key | Action |
@@ -270,7 +270,9 @@ no internet. Video is sent only while someone watches the camera previews or the
 
 Without hardware, `python -m helmet.main --sim` runs scripted traffic (car behind, normal left
 pass, car cutting in, close pass right, two cars, steady follower) through the real tracker,
-alerts, OLED and Arduino. It's useful for working on the view and as a demo backup.
+alerts, OLED and Arduino, with scripted front scenes (a chair, a person walking at you) through
+the front BRAKE engine at the same time. Both camera tiles on `/view` show the simulated feeds.
+`--rear-only` leaves the front out. It's useful for working on the view and as a demo backup.
 
 With `--demo-person`, people are drawn as walking figures instead of cars, the banner says
 "Person...", and a DEMO MODE badge shows. `--sim --demo-person` rehearses the stationary demo

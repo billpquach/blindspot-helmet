@@ -185,6 +185,7 @@ def test_main_sim_serves_live_state():
     ts = [s["t"] for s in snaps]
     assert all(b > a for a, b in zip(ts, ts[1:])), "snapshots must move forward in time"
     assert any(s["cars"] for s in snaps) and snaps[-1]["scene"], snaps[-1]
+    assert snaps[-1].get("collision") and "| front: " in snaps[-1]["scene"], "--sim scripts the front camera too"
     assert "2.5D view: http://" in out.getvalue()
     rate = (len(ts) - 1) / (ts[-1] - ts[0])
     print(f"  main --sim: /state live at ~{rate:.0f} Hz, scene '{snaps[-1]['scene']}', {len(snaps[-1]['cars'])} car(s)")

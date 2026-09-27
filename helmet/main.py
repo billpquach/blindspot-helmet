@@ -65,7 +65,9 @@ def parse_args():
     ap.add_argument("--port", help="Arduino serial port (default: auto-detect)")
     ap.add_argument("--no-gemini", action="store_true")
     ap.add_argument("--no-hud", action="store_true", help="don't drive the transparent OLED")
-    ap.add_argument("--sim", action="store_true", help="scripted traffic instead of the camera (no YOLO); web view on")
+    ap.add_argument("--sim", action="store_true",
+                    help="scripted traffic instead of the cameras (no YOLO): front and rear, web view on")
+    ap.add_argument("--rear-only", action="store_true", help="with --sim: script only the rear camera")
     ap.add_argument("--agent", action="store_true", help="Gemini tool-calling mode")
     ap.add_argument("--demo-person", action="store_true", help="count people as vehicles (stationary demo)")
     ap.add_argument("--model", help="YOLO weights, e.g. yolo26n.pt")
@@ -75,6 +77,10 @@ def parse_args():
     ap.add_argument("--stream", type=int, default=None, help="web view port (0 = off; default 8080 on a Pi)")
     ap.add_argument("--camera-source", choices=["auto", "usb", "picamera2"], help="camera type")
     args = ap.parse_args()
+    if args.rear_only and (not args.sim or args.collision):
+        ap.error("--rear-only goes with --sim, without --collision")
+    if args.sim and not args.rear_only:
+        args.collision = True                     # the simulator scripts the front camera too
     if args.collision_calibration and not args.collision:
         ap.error("--collision-calibration requires --collision")
     if args.collision:
@@ -211,7 +217,9 @@ def main():
         streamer.incidents = recorder
         if forward is None:
             rear_index = cfg.CAMERA_INDEX if args.camera is None else args.camera
-            if args.sim or args.video:
+            if args.sim:
+                streamer.publish_camera("front", None, unavailable="Rear only (--rear-only)")
+            elif args.video:
                 streamer.publish_camera("front", None, unavailable="No front feed in this run")
             elif args.front_camera == rear_index:
                 streamer.publish_camera("front", None, unavailable="Choose a different front camera")

@@ -209,8 +209,9 @@ class Scenario:
                     t = _ray_box(sx, 0.0, dx, dz, x - hw, x + hw, z - hl, z + hl)
                     if t is not None and (best is None or t < best):
                         best = t
-            if best is not None and best <= cfg.SONAR_MAX_CM / 100.0 and self.rng.random() > 0.05:
-                out[name] = round(best + self.rng.uniform(-0.01, 0.01), 3)
+            # A real HC-SR04 reads nothing closer than a few cm (e.g. a scripted car overlapping the rider)
+            if best is not None and cfg.SONAR_MIN_M <= best <= cfg.SONAR_MAX_CM / 100.0 and self.rng.random() > 0.05:
+                out[name] = round(max(cfg.SONAR_MIN_M, best + self.rng.uniform(-0.01, 0.01)), 3)
             else:
                 out[name] = None
         return out
