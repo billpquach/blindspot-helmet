@@ -172,10 +172,18 @@ scene.fog = new THREE.Fog(0x0b0e13, 40, 70);
 const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
 let forwardView = false;
 
-// Frame the road from `ahead` in front of the rider to viewBehind behind: pick the tilt, then
-// solve for the camera height and position that put those two lines on chosen screen rows,
-// clear of the overlays (phones: camera tiles and legend at the bottom; laptops: banner and
-// legend at the top, camera tiles at the right, so the road shifts left while they show).
+// Where the rider sits between the top and bottom of the road area when the front camera is on:
+// 0.4 = 40% of the space above (ahead), 60% below (behind), matching 8 m ahead / 12 m behind.
+// /view?rider=0.5 centres the rider (allowed 0.25 to 0.5: past that the camera drops so low that the
+// far end of the road and the horizon show).
+const RIDER_ROW = Math.min(0.5, Math.max(0.25, parseFloat(qs.get('rider')) || 0.4));
+
+// Frame the road clear of the overlays (phones: camera tiles and legend at the bottom; laptops:
+// banner and legend at the top, camera tiles at the right, so the road shifts left while they
+// show). With the front camera on, the rider goes on the RIDER_ROW line and viewBehind on the
+// bottom row, and the road ahead runs on past viewAhead into the fog. Pinning the ahead edge
+// to the top instead lets perspective squeeze the front into a sliver and push the rider up.
+// Rear only: `ahead` (3 m) on the top row and viewBehind on the bottom row.
 function placeCamera() {
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setSize(w, h, false);
@@ -191,8 +199,15 @@ function placeCamera() {
   const ta = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   const below = (y) => pitch + Math.atan((y - h / 2) / (h / 2) * ta);   // ray angle below horizontal for row y
   const cot = (a) => 1 / Math.tan(a);
-  const height = (ahead + viewBehind) / (cot(below(top)) - cot(below(bottom)));
-  const z = height * cot(below(top)) - ahead;
+  let height = (ahead + viewBehind) / (cot(below(top)) - cot(below(bottom)));
+  let z = height * cot(below(top)) - ahead;
+  if (forwardView) {
+    const row = top + RIDER_ROW * (bottom - top);
+    const h2 = viewBehind / (cot(below(row)) - cot(below(bottom)));
+    const z2 = h2 * cot(below(row));
+    const aheadAtTop = below(top) > 0 ? h2 * cot(below(top)) - z2 : Infinity;
+    if (aheadAtTop >= ahead) { height = h2; z = z2; }   // else keep the whole front range on screen
+  }
   camera.position.set(0, height, z);
   camera.lookAt(0, 0, z - height * cot(pitch));
   camera.setViewOffset(fullW, h, fullW / 2 - cx * w, 0, w, h);
@@ -255,7 +270,7 @@ function cylinder(a, b, r, mat) {                         // a rod between two p
 flat(80, 100, new THREE.MeshStandardMaterial({ color: 0x0f1319, roughness: 1 }), 0, 20, 0);
 flat(ROAD_HALF * 2, 110, new THREE.MeshStandardMaterial({ color: 0x1a2029, roughness: 0.95 }), 0, 20, 0.002);
 const edgeMat = new THREE.MeshBasicMaterial({ color: 0x3a4452 });
-for (const x of [-ROAD_HALF, ROAD_HALF]) flat(0.08, 90, edgeMat, x, 30, 0.006);
+for (const x of [-ROAD_HALF, ROAD_HALF]) flat(0.08, 110, edgeMat, x, 20, 0.006);   // as long as the road: both fade in the fog
 // Distance rings every 5 m behind and ahead; setRange() shows the ones inside the drawn range.
 const ringMat = new THREE.MeshBasicMaterial({ color: 0x2a323d });
 const rings = [];
